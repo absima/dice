@@ -92,6 +92,8 @@
 
     .stage {
       display: grid;
+      min-height: calc(100svh - clamp(24px, 6svh, 68px));
+      grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto;
       gap: clamp(12px, 2.5svh, 20px);
       justify-items: center;
       text-align: center;
@@ -184,7 +186,8 @@
       position: relative;
       width: min(58vw, var(--display-size));
       min-width: min(58vw, var(--display-size));
-      margin: 18px 0 10px;
+      align-self: center;
+      margin: 0;
       aspect-ratio: 1;
       display: grid;
       place-items: center;
@@ -326,7 +329,19 @@
       min-height: 126px;
       display: grid;
       align-content: start;
+      align-self: end;
+      margin-bottom: clamp(14px, 3.5svh, 34px);
       gap: 10px;
+    }
+
+    .status,
+    .instruction {
+      width: min(100%, 420px);
+      min-height: 24px;
+      display: grid;
+      place-items: center;
+      font-size: 0.88rem;
+      font-weight: 750;
     }
 
     .range-controls,
@@ -407,10 +422,12 @@
     }
 
     .status {
-      min-height: 20px;
+      color: var(--ink);
+      font-weight: 850;
+    }
+
+    .instruction {
       color: var(--muted);
-      font-size: 0.92rem;
-      font-weight: 750;
     }
 
     .top-toggle {
@@ -422,6 +439,10 @@
     @media (max-width: 820px) {
       main {
         padding: 8px 0;
+      }
+
+      .stage {
+        gap: clamp(10px, 1.7svh, 16px);
       }
 
       h1 {
@@ -436,8 +457,24 @@
         --face-gap: clamp(10px, 2svh, 14px);
       }
 
+      .display-shell {
+        margin-bottom: clamp(18px, 3svh, 28px);
+      }
+
+      .options {
+        margin-bottom: clamp(7px, 1.75svh, 17px);
+      }
+
       .hue-wheel {
-        transform: translate(-10px, -18px);
+        transform: translate(-10px, -8px);
+      }
+
+      .status {
+        min-height: 26px;
+      }
+
+      .instruction {
+        min-height: 26px;
       }
     }
 
@@ -485,6 +522,9 @@
         </button>
       </div>
 
+      <div class="status" id="status" aria-live="polite"></div>
+      <div class="instruction" id="instruction"></div>
+
       <div class="options">
         <div class="range-controls">
           <label>Min<input id="rangeMin" type="number" step="1" min="0" max="1000" value="1"></label>
@@ -503,8 +543,6 @@
           <button class="compact-button" id="hueClearButton" type="button">Clear</button>
           <button class="compact-button" id="hueDemoButton" type="button">Demo</button>
         </div>
-
-        <div class="status" id="status"></div>
       </div>
     </section>
   </main>
@@ -529,6 +567,7 @@
     const hueClearButton = document.getElementById("hueClearButton");
     const hueDemoButton = document.getElementById("hueDemoButton");
     const status = document.getElementById("status");
+    const instruction = document.getElementById("instruction");
     const themeButton = document.getElementById("themeButton");
     const soundButton = document.getElementById("soundButton");
     const audioFiles = {
@@ -714,6 +753,9 @@
       shuffleRollButton.classList.toggle("is-active", mode === "shuffle");
       hueRollButton.classList.toggle("is-active", mode === "hue");
       status.textContent = mode === "hue" ? `${hueEntries.length} entries` : "";
+      if (mode === "dice") instruction.textContent = "Touch the dice to roll";
+      if (mode === "shuffle") instruction.textContent = "Touch the square to shuffle";
+      if (mode === "hue") instruction.textContent = "Touch Spin to rotate";
     }
 
     function easeOutCubic(progress) {
