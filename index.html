@@ -3,24 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chance</title>
+  <title>PickOne</title>
   <style>
     :root {
       color-scheme: light;
-      --display-size: 280px;
-      --face-size: 180px;
+      --display-size: 330px;
+      --face-size: 220px;
+      --face-depth: 110px;
+      --face-padding: 34px;
+      --face-gap: 14px;
       --ink: #172026;
       --muted: #66747f;
       --paper: #eef7f4;
-      --panel: #ffffff;
       --line: #d9dde0;
       --blue: #2357d6;
-      --blue-dark: #173f9f;
-      --green: #24705a;
       --red: #b34141;
-      --yellow: #f4bd45;
-      --shadow: 0 24px 70px rgba(23, 32, 38, 0.18);
       --radius: 8px;
+      --body-bg:
+        radial-gradient(circle at 20% 12%, rgba(55, 147, 124, 0.18), transparent 30rem),
+        linear-gradient(135deg, #f4fbf8 0%, var(--paper) 44%, #e8f0fb 100%);
+      --dice-face-bg:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(236, 242, 248, 0.94)),
+        #fff;
+      --dice-pip: #172026;
+      --number-bg:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(235, 241, 247, 0.9)),
+        #fff;
+      --button-bg: #ffffff;
+    }
+
+    body[data-theme="dark"] {
+      color-scheme: dark;
+      --ink: #f4f7fb;
+      --muted: #a8b4c0;
+      --paper: #141a20;
+      --line: #35404a;
+      --body-bg:
+        radial-gradient(circle at 20% 12%, rgba(80, 174, 150, 0.12), transparent 30rem),
+        linear-gradient(135deg, #10161b 0%, #151d24 54%, #1f2630 100%);
+      --dice-face-bg:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(226, 233, 240, 0.94)),
+        #fff;
+      --dice-pip: #172026;
+      --number-bg:
+        linear-gradient(180deg, rgba(35, 43, 52, 0.98), rgba(23, 30, 38, 0.96)),
+        #202832;
+      --button-bg: #202832;
     }
 
     * {
@@ -30,34 +58,27 @@
     body {
       margin: 0;
       min-height: 100vh;
+      min-height: 100svh;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--ink);
-      background:
-        radial-gradient(circle at 20% 12%, rgba(55, 147, 124, 0.18), transparent 30rem),
-        linear-gradient(135deg, #f4fbf8 0%, var(--paper) 44%, #e8f0fb 100%);
+      background: var(--body-bg);
     }
 
     main {
       width: min(760px, calc(100% - 32px));
       min-height: 100vh;
+      min-height: 100svh;
       margin: 0 auto;
       display: grid;
       align-items: center;
-      padding: 48px 0;
+      padding: clamp(12px, 3svh, 34px) 0;
     }
 
     .stage {
       display: grid;
-      gap: 20px;
+      gap: clamp(12px, 2.5svh, 20px);
       justify-items: center;
       text-align: center;
-    }
-
-    .topbar {
-      width: min(100%, 360px);
-      display: grid;
-      gap: 14px;
-      justify-items: center;
     }
 
     h1 {
@@ -65,12 +86,74 @@
       font-size: clamp(2.4rem, 7vw, 4.5rem);
       line-height: 0.95;
       letter-spacing: 0;
-      text-align: center;
+    }
+
+    .top-controls {
+      width: min(100%, 420px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mode-buttons {
+      width: min(100%, 420px);
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    button {
+      min-height: 48px;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 0 14px;
+      color: var(--ink);
+      background: var(--button-bg);
+      border: 1px solid var(--line);
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .mode-buttons button {
+      min-height: 36px;
+      padding: 0 4px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      font-size: clamp(1rem, 3.6vw, 1.25rem);
+    }
+
+    .mode-buttons button.is-active {
+      color: var(--ink);
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      text-decoration: underline;
+      text-decoration-thickness: 3px;
+      text-underline-offset: 8px;
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.72;
     }
 
     .display-shell {
       position: relative;
       width: min(58vw, var(--display-size));
+      margin: 18px 0 10px;
       aspect-ratio: 1;
       display: grid;
       place-items: center;
@@ -86,11 +169,9 @@
       place-items: center;
       border: 0;
       padding: 0;
-      border-radius: 22px;
       background: transparent;
       opacity: 0;
       pointer-events: none;
-      cursor: pointer;
       transform: scale(0.96);
       transition: opacity 240ms ease, transform 240ms ease;
     }
@@ -99,15 +180,6 @@
       opacity: 1;
       pointer-events: auto;
       transform: scale(1);
-    }
-
-    .display-layer:focus-visible {
-      outline: 4px solid rgba(35, 87, 214, 0.22);
-      outline-offset: 8px;
-    }
-
-    .display-layer:disabled {
-      cursor: wait;
     }
 
     .dice {
@@ -125,13 +197,11 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(3, 1fr);
-      gap: 12px;
-      padding: 28px;
+      gap: var(--face-gap);
+      padding: var(--face-padding);
       border: 2px solid rgba(23, 32, 38, 0.12);
       border-radius: 18px;
-      background:
-        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(236, 242, 248, 0.94)),
-        var(--panel);
+      background: var(--dice-face-bg);
       box-shadow: inset -14px -16px 30px rgba(23, 32, 38, 0.06);
       backface-visibility: hidden;
     }
@@ -140,16 +210,16 @@
       width: 100%;
       aspect-ratio: 1;
       border-radius: 999px;
-      background: var(--ink);
+      background: var(--dice-pip);
       box-shadow: inset -3px -4px 8px rgba(255, 255, 255, 0.15);
     }
 
-    .front { transform: translateZ(90px); }
-    .back { transform: rotateY(180deg) translateZ(90px); }
-    .right { transform: rotateY(90deg) translateZ(90px); }
-    .left { transform: rotateY(-90deg) translateZ(90px); }
-    .top { transform: rotateX(90deg) translateZ(90px); }
-    .bottom { transform: rotateX(-90deg) translateZ(90px); }
+    .front { transform: translateZ(var(--face-depth)); }
+    .back { transform: rotateY(180deg) translateZ(var(--face-depth)); }
+    .right { transform: rotateY(90deg) translateZ(var(--face-depth)); }
+    .left { transform: rotateY(-90deg) translateZ(var(--face-depth)); }
+    .top { transform: rotateX(90deg) translateZ(var(--face-depth)); }
+    .bottom { transform: rotateX(-90deg) translateZ(var(--face-depth)); }
 
     .center { grid-area: 2 / 2; }
     .top-left { grid-area: 1 / 1; }
@@ -159,73 +229,15 @@
     .bottom-left { grid-area: 3 / 1; }
     .bottom-right { grid-area: 3 / 3; }
 
-    .action-row {
-      width: min(100%, 360px);
-      display: grid;
-      gap: 10px;
-    }
-
-    .shuffle-control-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      align-items: start;
-      gap: 10px;
-    }
-
-    button {
-      min-height: 48px;
-      border: 0;
-      border-radius: var(--radius);
-      padding: 0 18px;
-      font: inherit;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
-    }
-
-    .display-layer.is-active:hover {
-      transform: scale(1.02);
-    }
-
-    .action-button:hover {
-      transform: translateY(-1px);
-    }
-
-    .action-button:active {
-      transform: translateY(0);
-    }
-
-    .action-button {
-      width: 100%;
-      color: var(--ink);
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-
-    .action-button.is-active {
-      color: #fff;
-      border-color: var(--blue);
-      background: var(--blue);
-      box-shadow: 0 14px 28px rgba(35, 87, 214, 0.22);
-    }
-
-    .action-button:disabled {
-      cursor: wait;
-      opacity: 0.72;
-    }
-
     .number-display {
       width: var(--face-size);
       aspect-ratio: 1;
-      justify-self: center;
       display: grid;
       place-items: center;
       overflow: hidden;
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(235, 241, 247, 0.9)),
-        #fff;
+      background: var(--number-bg);
       box-shadow: inset 0 -18px 40px rgba(23, 32, 38, 0.06);
     }
 
@@ -239,7 +251,6 @@
       line-height: 1;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
-      transform: translateY(0) scale(1);
       transition: transform 120ms ease, color 120ms ease;
     }
 
@@ -248,21 +259,69 @@
       transform: translateY(-3px) scale(1.04);
     }
 
-    .range-controls {
+    .hue-wheel {
+      position: relative;
+      width: var(--display-size);
+      max-width: 100%;
+      aspect-ratio: 1;
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      min-height: 48px;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(-2px);
-      transition: opacity 180ms ease, transform 260ms ease;
+      place-items: center;
+      transform: translate(-10px, -8px);
     }
 
-    .mode-shuffle .range-controls {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0);
+    .hue-wheel svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      filter: drop-shadow(0 18px 36px rgba(23, 32, 38, 0.18));
+      transform-origin: 50% 50%;
+    }
+
+    .hue-center {
+      position: absolute;
+      width: 68px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: var(--ink);
+      background: #ffffff;
+      border: 2px solid rgba(23, 32, 38, 0.22);
+      font-weight: 900;
+    }
+
+    .options {
+      width: min(100%, 420px);
+      min-height: 88px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .range-controls,
+    .hue-controls {
+      display: none;
+      gap: 8px;
+    }
+
+    .mode-shuffle .range-controls,
+    .mode-hue .hue-controls {
+      display: grid;
+    }
+
+    .range-controls {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hue-controls {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+      align-items: end;
+    }
+
+    .hue-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 42px;
+      gap: 8px;
+      align-items: end;
     }
 
     label {
@@ -271,113 +330,117 @@
       color: var(--muted);
       font-size: 0.72rem;
       font-weight: 800;
+      text-align: left;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
 
     input {
       width: 100%;
-      min-height: 32px;
+      min-height: 34px;
       border: 1px solid var(--line);
       border-radius: var(--radius);
       padding: 0 8px;
       color: var(--ink);
-      background: #fff;
+      background: var(--button-bg);
       font: inherit;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       outline: none;
-      transition: border-color 140ms ease, box-shadow 140ms ease;
     }
 
-    input:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 4px rgba(35, 87, 214, 0.14);
+    .compact-button {
+      align-self: end;
+      min-height: 34px;
+      padding: 0 10px;
+      font-size: 0.86rem;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        animation-duration: 1ms !important;
-        scroll-behavior: auto !important;
-        transition-duration: 1ms !important;
-      }
+    .icon-button {
+      min-height: 34px;
+      padding: 0;
+      font-size: 1.2rem;
+      font-weight: 900;
+    }
+
+    .add-button {
+      border-color: #2f9e64;
+      background: #dff8eb;
+      color: #145c35;
+    }
+
+    .remove-button {
+      border-color: #d95c5c;
+      background: #fde5e5;
+      color: #8f2424;
+    }
+
+    .status {
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 750;
+    }
+
+    .top-toggle {
+      min-height: 30px;
+      padding: 0 12px;
+      font-size: 0.8rem;
     }
 
     @media (max-width: 820px) {
       main {
-        grid-template-columns: 1fr;
-        gap: 28px;
-        padding: 30px 0;
+        padding: 8px 0;
       }
 
-      .dice {
-        width: 150px;
+      h1 {
+        font-size: clamp(2.15rem, 11vw, 3.25rem);
       }
 
       :root {
-        --display-size: 240px;
-        --face-size: 150px;
+        --display-size: clamp(250px, 42svh, 310px);
+        --face-size: clamp(175px, 31svh, 215px);
+        --face-depth: clamp(87.5px, 15.5svh, 107.5px);
+        --face-padding: clamp(26px, 5svh, 34px);
+        --face-gap: clamp(10px, 2svh, 14px);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .hue-controls {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       }
 
-      .face {
-        gap: 10px;
-        padding: 24px;
+      #hueClearButton {
+        grid-column: auto;
       }
-
-      .front { transform: translateZ(75px); }
-      .back { transform: rotateY(180deg) translateZ(75px); }
-      .right { transform: rotateY(90deg) translateZ(75px); }
-      .left { transform: rotateY(-90deg) translateZ(75px); }
-      .top { transform: rotateX(90deg) translateZ(75px); }
-      .bottom { transform: rotateX(-90deg) translateZ(75px); }
     }
   </style>
 </head>
 <body>
-  <main class="mode-dice" id="app">
-    <section class="stage" aria-label="Decision dice">
-      <div class="topbar">
-        <h1>Simon</h1>
-        <button class="action-button is-active" id="diceButton" type="button">Dice</button>
+  <main class="mode-hue" id="app">
+    <section class="stage" aria-label="PickOne tools">
+      <div class="top-controls">
+        <button class="compact-button top-toggle" id="themeButton" type="button" aria-pressed="false">Dark</button>
+        <button class="compact-button top-toggle" id="soundButton" type="button" aria-pressed="true">Sound on</button>
+      </div>
+
+      <h1>PickOne</h1>
+
+      <div class="mode-buttons">
+        <button class="is-active" id="hueButton" type="button">Wheel</button>
+        <button id="diceButton" type="button">Dice</button>
+        <button id="shuffleButton" type="button">Shuffle</button>
       </div>
 
       <div class="display-shell" aria-live="polite">
         <button class="display-layer is-active" id="diceRollButton" type="button" aria-label="Roll dice">
           <div class="dice" id="dice" aria-hidden="true">
-            <div class="face front">
-              <span class="pip center"></span>
-            </div>
-            <div class="face right">
-              <span class="pip top-left"></span>
-              <span class="pip bottom-right"></span>
-            </div>
-            <div class="face top">
-              <span class="pip top-left"></span>
-              <span class="pip center"></span>
-              <span class="pip bottom-right"></span>
-            </div>
-            <div class="face bottom">
-              <span class="pip top-left"></span>
-              <span class="pip top-right"></span>
-              <span class="pip bottom-left"></span>
-              <span class="pip bottom-right"></span>
-            </div>
-            <div class="face left">
-              <span class="pip top-left"></span>
-              <span class="pip top-right"></span>
-              <span class="pip center"></span>
-              <span class="pip bottom-left"></span>
-              <span class="pip bottom-right"></span>
-            </div>
-            <div class="face back">
-              <span class="pip top-left"></span>
-              <span class="pip top-right"></span>
-              <span class="pip middle-left"></span>
-              <span class="pip middle-right"></span>
-              <span class="pip bottom-left"></span>
-              <span class="pip bottom-right"></span>
-            </div>
+            <div class="face front"><span class="pip center"></span></div>
+            <div class="face right"><span class="pip top-left"></span><span class="pip bottom-right"></span></div>
+            <div class="face top"><span class="pip top-left"></span><span class="pip center"></span><span class="pip bottom-right"></span></div>
+            <div class="face bottom"><span class="pip top-left"></span><span class="pip top-right"></span><span class="pip bottom-left"></span><span class="pip bottom-right"></span></div>
+            <div class="face left"><span class="pip top-left"></span><span class="pip top-right"></span><span class="pip center"></span><span class="pip bottom-left"></span><span class="pip bottom-right"></span></div>
+            <div class="face back"><span class="pip top-left"></span><span class="pip top-right"></span><span class="pip middle-left"></span><span class="pip middle-right"></span><span class="pip bottom-left"></span><span class="pip bottom-right"></span></div>
           </div>
         </button>
 
@@ -386,33 +449,68 @@
             <div class="shuffle-number" id="shuffleNumber">1</div>
           </div>
         </button>
-      </div>
 
-      <div class="action-row">
-        <div class="shuffle-control-row">
-          <button class="action-button" id="shuffleButton" type="button">Shuffle</button>
-          <div class="range-controls" id="rangeControls" aria-label="Shuffle number range">
-            <label>Min<input id="rangeMin" type="number" step="1" min="0" max="1000" value="1"></label>
-            <label>Max<input id="rangeMax" type="number" step="1" min="0" max="1000" value="6"></label>
+        <button class="display-layer" id="hueRollButton" type="button" aria-label="Spin wheel">
+          <div class="hue-wheel">
+            <svg id="hueSvg" viewBox="0 0 100 100"></svg>
+            <div class="hue-center">Spin</div>
           </div>
-        </div>
+        </button>
       </div>
 
+      <div class="options">
+        <div class="range-controls">
+          <label>Min<input id="rangeMin" type="number" step="1" min="0" max="1000" value="1"></label>
+          <label>Max<input id="rangeMax" type="number" step="1" min="0" max="1000" value="6"></label>
+        </div>
+
+        <div class="hue-controls">
+          <div class="hue-row">
+            <label>Add<input id="hueAdd" type="text" placeholder="Name"></label>
+            <button class="icon-button add-button" id="hueAddButton" type="button" aria-label="Add name">+</button>
+          </div>
+          <div class="hue-row">
+            <label>Remove<input id="hueRemove" type="text" placeholder="Name"></label>
+            <button class="icon-button remove-button" id="hueRemoveButton" type="button" aria-label="Remove name">-</button>
+          </div>
+          <button class="compact-button" id="hueClearButton" type="button">Clear</button>
+          <button class="compact-button" id="hueDemoButton" type="button">Demo</button>
+        </div>
+
+        <div class="status" id="status"></div>
+      </div>
     </section>
   </main>
 
   <script>
     const app = document.getElementById("app");
     const dice = document.getElementById("dice");
-    const diceRollButton = document.getElementById("diceRollButton");
-    const shuffleRollButton = document.getElementById("shuffleRollButton");
     const diceButton = document.getElementById("diceButton");
     const shuffleButton = document.getElementById("shuffleButton");
+    const hueButton = document.getElementById("hueButton");
+    const diceRollButton = document.getElementById("diceRollButton");
+    const shuffleRollButton = document.getElementById("shuffleRollButton");
+    const hueRollButton = document.getElementById("hueRollButton");
     const rangeMin = document.getElementById("rangeMin");
     const rangeMax = document.getElementById("rangeMax");
     const shuffleNumber = document.getElementById("shuffleNumber");
-    const RANGE_LIMIT = 1000;
+    const hueSvg = document.getElementById("hueSvg");
+    const hueAdd = document.getElementById("hueAdd");
+    const hueRemove = document.getElementById("hueRemove");
+    const hueAddButton = document.getElementById("hueAddButton");
+    const hueRemoveButton = document.getElementById("hueRemoveButton");
+    const hueClearButton = document.getElementById("hueClearButton");
+    const hueDemoButton = document.getElementById("hueDemoButton");
+    const status = document.getElementById("status");
+    const themeButton = document.getElementById("themeButton");
+    const soundButton = document.getElementById("soundButton");
+    const tickSound = new Audio("tick.mp3");
+    const stopSound = new Audio("spin_stop.mp3");
+    const diceSound = new Audio("dice.mp3");
+    const shuffleSound = new Audio("shuffle.mp3");
 
+    const RANGE_LIMIT = 1000;
+    const MAX_HUE_ENTRIES = 30;
     const faceAngles = [
       { x: 0, y: 0, z: 0 },
       { x: 0, y: -90, z: 0 },
@@ -422,37 +520,104 @@
       { x: 0, y: 180, z: 0 }
     ];
 
-    let isRolling = false;
-    let isShuffling = false;
+    let activeMode = "dice";
+    let isBusy = false;
+    let darkMode = false;
+    let soundEnabled = true;
     let currentRotation = { x: 0, y: 0, z: 0 };
-
-    function setMode(mode) {
-      const isDice = mode === "dice";
-      app.classList.toggle("mode-dice", isDice);
-      app.classList.toggle("mode-shuffle", !isDice);
-      diceRollButton.classList.toggle("is-active", isDice);
-      shuffleRollButton.classList.toggle("is-active", !isDice);
-      diceButton.classList.toggle("is-active", isDice);
-      shuffleButton.classList.toggle("is-active", !isDice);
-      rangeMin.disabled = isDice;
-      rangeMax.disabled = isDice;
-    }
+    const defaultHueEntries = [
+      "Arthi",
+      "Bruno",
+      "David",
+      "Fabian",
+      "Fi",
+      "Jens",
+      "Julio",
+      "Katrin",
+      "Luben",
+      "Malaiz",
+      "Marina",
+      "Samin",
+      "Sima",
+      "Sivak",
+      "Victor",
+      "Zan"
+    ];
+    let hueEntries = [...defaultHueEntries];
+    let hueRotation = 0;
 
     function randomInt(min, max) {
       const range = max - min + 1;
       const maxUnbiasedValue = Math.floor(0x100000000 / range) * range;
       const randomBuffer = new Uint32Array(1);
-
       do {
         crypto.getRandomValues(randomBuffer);
       } while (randomBuffer[0] >= maxUnbiasedValue);
-
       return min + (randomBuffer[0] % range);
     }
 
-    function clampRangeValue(value) {
-      if (!Number.isFinite(value)) return 0;
-      return Math.max(0, Math.min(RANGE_LIMIT, value));
+    function playSound(source, volume = 0.65) {
+      if (!soundEnabled) return;
+      const sound = source.cloneNode();
+      sound.volume = volume;
+      sound.play().catch(() => {});
+    }
+
+    function startLoopingSound(source, volume = 0.65) {
+      if (!soundEnabled) return () => {};
+      const sounds = [source.cloneNode(), source.cloneNode()];
+      let soundIndex = 0;
+      function playNext() {
+        const sound = sounds[soundIndex];
+        soundIndex = (soundIndex + 1) % sounds.length;
+        sound.pause();
+        sound.currentTime = 0;
+        sound.volume = volume;
+        sound.play().catch(() => {});
+      }
+      playNext();
+      const interval = window.setInterval(playNext, 150);
+      return () => {
+        window.clearInterval(interval);
+        sounds.forEach((sound) => {
+          sound.pause();
+          sound.currentTime = 0;
+        });
+      };
+    }
+
+    function startWheelTicks(duration) {
+      if (!soundEnabled) return () => {};
+      let stopped = false;
+      const startTime = performance.now();
+      let nextTick = startTime;
+
+      function scheduleTick(now) {
+        if (stopped) return;
+        const progress = Math.min((now - startTime) / duration, 1);
+        if (now >= nextTick && progress < 0.96) {
+          playSound(tickSound, 0.62);
+          nextTick = now + 55 + easeOutCubic(progress) * 210;
+        }
+        if (progress < 1) requestAnimationFrame(scheduleTick);
+      }
+
+      requestAnimationFrame(scheduleTick);
+      return () => {
+        stopped = true;
+      };
+    }
+
+    function setMode(mode) {
+      activeMode = mode;
+      app.className = `mode-${mode}`;
+      diceButton.classList.toggle("is-active", mode === "dice");
+      shuffleButton.classList.toggle("is-active", mode === "shuffle");
+      hueButton.classList.toggle("is-active", mode === "hue");
+      diceRollButton.classList.toggle("is-active", mode === "dice");
+      shuffleRollButton.classList.toggle("is-active", mode === "shuffle");
+      hueRollButton.classList.toggle("is-active", mode === "hue");
+      status.textContent = mode === "hue" ? `${hueEntries.length} entries` : "";
     }
 
     function easeOutCubic(progress) {
@@ -468,33 +633,22 @@
     }
 
     function animateDiceTo(targetFace) {
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const base = faceAngles[targetFace];
-      const turns = reduceMotion ? 0 : 4;
-      const wobble = reduceMotion ? 0 : 15;
       const start = { ...currentRotation };
-      const end = {
-        x: base.x + turns * 360,
-        y: base.y + (turns + 1) * 360,
-        z: base.z
-      };
-      const duration = reduceMotion ? 1 : 1180;
-
+      const end = { x: base.x + 1440, y: base.y + 1800, z: base.z };
+      const duration = 1180;
       return new Promise((resolve) => {
         const startTime = performance.now();
-
         function tick(now) {
           const rawProgress = Math.min((now - startTime) / duration, 1);
           const eased = easeOutQuart(rawProgress);
-          const wobbleAmount = Math.sin(rawProgress * Math.PI * 9) * wobble * Math.pow(1 - rawProgress, 1.5);
+          const wobble = Math.sin(rawProgress * Math.PI * 9) * 15 * Math.pow(1 - rawProgress, 1.5);
           const next = {
-            x: start.x + (end.x - start.x) * eased + wobbleAmount,
-            y: start.y + (end.y - start.y) * eased - wobbleAmount * 0.65,
-            z: start.z + (end.z - start.z) * eased + wobbleAmount * 0.35
+            x: start.x + (end.x - start.x) * eased + wobble,
+            y: start.y + (end.y - start.y) * eased - wobble * 0.65,
+            z: start.z + (end.z - start.z) * eased + wobble * 0.35
           };
-
           setDiceRotation(next);
-
           if (rawProgress < 1) {
             requestAnimationFrame(tick);
           } else {
@@ -503,38 +657,27 @@
             resolve();
           }
         }
-
         requestAnimationFrame(tick);
       });
     }
 
     async function rollDice() {
-      if (isRolling) return;
-
+      if (isBusy) return;
       setMode("dice");
-      isRolling = true;
-      diceRollButton.disabled = true;
-      shuffleRollButton.disabled = true;
-      diceButton.disabled = true;
-      shuffleButton.disabled = true;
-
+      isBusy = true;
       const selectedFace = randomInt(0, 5);
+      playSound(diceSound, 0.58);
       await animateDiceTo(selectedFace);
-      isRolling = false;
-      diceRollButton.disabled = false;
-      shuffleRollButton.disabled = false;
-      diceButton.disabled = false;
-      shuffleButton.disabled = false;
+      status.textContent = `Chosen: ${selectedFace + 1}`;
+      isBusy = false;
     }
 
     function getRange() {
-      const first = clampRangeValue(Number.parseInt(rangeMin.value, 10));
-      const second = clampRangeValue(Number.parseInt(rangeMax.value, 10));
+      const first = Math.max(0, Math.min(RANGE_LIMIT, Number.parseInt(rangeMin.value, 10) || 0));
+      const second = Math.max(0, Math.min(RANGE_LIMIT, Number.parseInt(rangeMax.value, 10) || 0));
       rangeMin.value = String(first);
       rangeMax.value = String(second);
-      const min = Math.min(first, second);
-      const max = Math.max(first, second);
-      return { min, max };
+      return { min: Math.min(first, second), max: Math.max(first, second) };
     }
 
     function fitShuffleNumber(value, min, max) {
@@ -544,24 +687,21 @@
     }
 
     function animateNumberShuffle(finalNumber, min, max) {
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const duration = reduceMotion ? 1 : 1450;
+      const duration = 1450;
       let lastStep = 0;
-      let displayedFinal = false;
-
       return new Promise((resolve) => {
         const startTime = performance.now();
-
         function tick(now) {
           const progress = Math.min((now - startTime) / duration, 1);
           const interval = 28 + easeOutCubic(progress) * 180;
-
-          if (progress === 1 && !displayedFinal) {
+          if (progress === 1) {
             fitShuffleNumber(finalNumber, min, max);
             shuffleNumber.textContent = String(finalNumber);
             shuffleNumber.classList.remove("changing");
-            displayedFinal = true;
-          } else if (now - lastStep >= interval && progress < 1) {
+            resolve();
+            return;
+          }
+          if (now - lastStep >= interval) {
             const nextNumber = randomInt(min, max);
             fitShuffleNumber(nextNumber, min, max);
             shuffleNumber.textContent = String(nextNumber);
@@ -569,54 +709,226 @@
             window.setTimeout(() => shuffleNumber.classList.remove("changing"), 90);
             lastStep = now;
           }
-
-          if (progress < 1) {
-            requestAnimationFrame(tick);
-          } else {
-            resolve();
-          }
+          requestAnimationFrame(tick);
         }
-
         requestAnimationFrame(tick);
       });
     }
 
     async function shuffleRange() {
-      if (isShuffling) return;
-
+      if (isBusy) return;
+      setMode("shuffle");
+      isBusy = true;
       const { min, max } = getRange();
       const selected = randomInt(min, max);
-      setMode("shuffle");
-      isShuffling = true;
-      diceRollButton.disabled = true;
-      shuffleRollButton.disabled = true;
-      diceButton.disabled = true;
-      shuffleButton.disabled = true;
-
+      const stopShuffleSound = startLoopingSound(shuffleSound, 0.5);
       await animateNumberShuffle(selected, min, max);
-      isShuffling = false;
-      diceRollButton.disabled = false;
-      shuffleRollButton.disabled = false;
-      diceButton.disabled = false;
-      shuffleButton.disabled = false;
+      stopShuffleSound();
+      status.textContent = `Chosen: ${selected}`;
+      isBusy = false;
+    }
+
+    function sectorPath(index, total) {
+      const center = 50;
+      const radius = 45;
+      const start = (index / total) * Math.PI * 2 - Math.PI / 2;
+      const end = ((index + 1) / total) * Math.PI * 2 - Math.PI / 2;
+      const x1 = center + radius * Math.cos(start);
+      const y1 = center + radius * Math.sin(start);
+      const x2 = center + radius * Math.cos(end);
+      const y2 = center + radius * Math.sin(end);
+      const largeArc = end - start > Math.PI ? 1 : 0;
+      return `M ${center} ${center} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+    }
+
+    function drawHueWheel(selectedIndex = -1) {
+      hueSvg.innerHTML = "";
+      if (hueEntries.length === 0) {
+        hueRotation = 0;
+        hueSvg.style.transition = "";
+        hueSvg.style.transform = "rotate(0deg)";
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", "50");
+        circle.setAttribute("cy", "50");
+        circle.setAttribute("r", "45");
+        circle.setAttribute("fill", "white");
+        circle.setAttribute("stroke", "#172026");
+        circle.setAttribute("stroke-width", "0.4");
+        hueSvg.appendChild(circle);
+        return;
+      }
+
+      if (hueEntries.length === 1) {
+        hueRotation = 0;
+        hueSvg.style.transition = "";
+        hueSvg.style.transform = "rotate(0deg)";
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", "50");
+        circle.setAttribute("cy", "50");
+        circle.setAttribute("r", "45");
+        circle.setAttribute("fill", "hsl(0 76% 55%)");
+        circle.setAttribute("stroke", "#172026");
+        circle.setAttribute("stroke-width", "0.4");
+        hueSvg.appendChild(circle);
+
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.textContent = hueEntries[0];
+        text.setAttribute("x", "50");
+        text.setAttribute("y", "28");
+        text.setAttribute("fill", "white");
+        text.setAttribute("font-size", "6");
+        text.setAttribute("font-weight", "700");
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("dominant-baseline", "middle");
+        hueSvg.appendChild(text);
+        return;
+      }
+
+      hueEntries.forEach((name, index) => {
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", sectorPath(index, hueEntries.length));
+        path.setAttribute("fill", selectedIndex === -1 || selectedIndex === index ? `hsl(${(index / hueEntries.length) * 360} 70% 55%)` : "hsl(0 0% 68%)");
+        path.setAttribute("stroke", "#172026");
+        path.setAttribute("stroke-width", "0.4");
+        hueSvg.appendChild(path);
+
+        const angle = ((index + 0.5) / hueEntries.length) * Math.PI * 2 - Math.PI / 2;
+        const textX = 50 + 28 * Math.cos(angle);
+        const textY = 50 + 28 * Math.sin(angle);
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.textContent = name;
+        text.setAttribute("x", String(textX));
+        text.setAttribute("y", String(textY));
+        text.setAttribute("fill", "white");
+        text.setAttribute("font-size", "4");
+        text.setAttribute("font-weight", "700");
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("dominant-baseline", "middle");
+        const baseRotation = angle * 180 / Math.PI;
+        const visualRotation = normalizeSignedDegrees(baseRotation + hueRotation);
+        let textRotation = baseRotation;
+        if (visualRotation < -90 || visualRotation > 90) {
+          textRotation += 180;
+        }
+        text.setAttribute("transform", `rotate(${textRotation} ${textX} ${textY})`);
+        hueSvg.appendChild(text);
+      });
+    }
+
+    function normalizeDegrees(degrees) {
+      return ((degrees % 360) + 360) % 360;
+    }
+
+    function normalizeSignedDegrees(degrees) {
+      const normalized = normalizeDegrees(degrees);
+      return normalized > 180 ? normalized - 360 : normalized;
+    }
+
+    async function spinHue() {
+      if (isBusy || hueEntries.length === 0) return;
+      setMode("hue");
+      isBusy = true;
+      drawHueWheel();
+      const selectedIndex = randomInt(0, hueEntries.length - 1);
+      const sector = 360 / hueEntries.length;
+      const selectedMidpoint = selectedIndex * sector + sector / 2 - 90;
+      const correction = normalizeDegrees(-selectedMidpoint - hueRotation);
+      const target = hueRotation + 1440 + correction;
+      const spinDuration = 1800;
+      const stopTicks = startWheelTicks(spinDuration);
+      hueSvg.style.transition = "transform 1800ms cubic-bezier(0.12, 0.78, 0.2, 1)";
+      hueSvg.style.transform = `rotate(${target}deg)`;
+      await new Promise((resolve) => window.setTimeout(resolve, 1850));
+      stopTicks();
+      hueRotation = target % 360;
+      hueSvg.style.transition = "";
+      hueSvg.style.transform = `rotate(${hueRotation}deg)`;
+      drawHueWheel(selectedIndex);
+      playSound(stopSound, 0.46);
+      status.textContent = `Chosen: ${hueEntries[selectedIndex]}`;
+      isBusy = false;
+    }
+
+    function addHueEntry() {
+      const value = hueAdd.value.trim();
+      if (!value || hueEntries.includes(value)) return;
+      if (hueEntries.length >= MAX_HUE_ENTRIES) {
+        status.textContent = `Maximum ${MAX_HUE_ENTRIES} entries`;
+        return;
+      }
+      hueEntries.push(value);
+      hueAdd.value = "";
+      drawHueWheel();
+      status.textContent = `${hueEntries.length} entries`;
+    }
+
+    function removeHueEntry() {
+      const value = hueRemove.value.trim();
+      hueEntries = hueEntries.filter((entry) => entry !== value);
+      hueRemove.value = "";
+      drawHueWheel();
+      status.textContent = `${hueEntries.length} entries`;
+    }
+
+    function clearHueEntries() {
+      hueEntries = [];
+      drawHueWheel();
+      status.textContent = "0 entries";
+    }
+
+    function restoreHueDemo() {
+      hueEntries = [...defaultHueEntries];
+      hueRotation = 0;
+      hueSvg.style.transition = "";
+      hueSvg.style.transform = "rotate(0deg)";
+      drawHueWheel();
+      status.textContent = `${hueEntries.length} entries`;
     }
 
     diceButton.addEventListener("click", () => setMode("dice"));
     shuffleButton.addEventListener("click", () => setMode("shuffle"));
+    hueButton.addEventListener("click", () => setMode("hue"));
     diceRollButton.addEventListener("click", rollDice);
     shuffleRollButton.addEventListener("click", shuffleRange);
-    setMode("dice");
-
-    window.addEventListener("keydown", (event) => {
-      if (event.code === "Space" && document.activeElement.tagName !== "INPUT") {
+    hueRollButton.addEventListener("click", spinHue);
+    soundButton.addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      soundButton.textContent = soundEnabled ? "Sound on" : "Sound off";
+      soundButton.setAttribute("aria-pressed", String(soundEnabled));
+    });
+    themeButton.addEventListener("click", () => {
+      darkMode = !darkMode;
+      document.body.dataset.theme = darkMode ? "dark" : "light";
+      themeButton.textContent = darkMode ? "Light" : "Dark";
+      themeButton.setAttribute("aria-pressed", String(darkMode));
+    });
+    hueAddButton.addEventListener("click", addHueEntry);
+    hueRemoveButton.addEventListener("click", removeHueEntry);
+    hueClearButton.addEventListener("click", clearHueEntries);
+    hueDemoButton.addEventListener("click", restoreHueDemo);
+    hueAdd.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
         event.preventDefault();
-        if (app.classList.contains("mode-shuffle")) {
-          shuffleRange();
-        } else {
-          rollDice();
-        }
+        addHueEntry();
       }
     });
+    hueRemove.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        removeHueEntry();
+      }
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.code !== "Space" || document.activeElement.tagName === "INPUT") return;
+      event.preventDefault();
+      if (activeMode === "dice") rollDice();
+      if (activeMode === "shuffle") shuffleRange();
+      if (activeMode === "hue") spinHue();
+    });
+
+    drawHueWheel();
+    setMode("hue");
   </script>
 </body>
 </html>
