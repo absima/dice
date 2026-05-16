@@ -1,0 +1,45 @@
+{
+  "name": "PickOne",
+  "short_name": "PickOne",
+  "description": "Add up to 30 names to a wheel, roll a dice, or choose a random number from your own min and max range.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#eef7f4",
+  "theme_color": "#eef7f4",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "images/app-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "images/image1.png",
+      "sizes": "984x1286",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "images/image2.png",
+      "sizes": "986x1300",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "images/image3.png",
+      "sizes": "984x1096",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "images/image4.png",
+      "sizes": "978x1216",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}
