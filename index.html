@@ -18,6 +18,10 @@
       --line: #d9dde0;
       --blue: #2357d6;
       --red: #b34141;
+      --wheel-color: #c8338d;
+      --dice-color: #2563d8;
+      --shuffle-color: #16805a;
+      --active-color: #172026;
       --radius: 8px;
       --body-bg:
         radial-gradient(circle at 20% 12%, rgba(55, 147, 124, 0.18), transparent 30rem),
@@ -38,6 +42,10 @@
       --muted: #a8b4c0;
       --paper: #141a20;
       --line: #35404a;
+      --wheel-color: #ff78c7;
+      --dice-color: #78a7ff;
+      --shuffle-color: #57d99b;
+      --active-color: #ffffff;
       --body-bg:
         radial-gradient(circle at 20% 12%, rgba(80, 174, 150, 0.12), transparent 30rem),
         linear-gradient(135deg, #10161b 0%, #151d24 54%, #1f2630 100%);
@@ -46,8 +54,8 @@
         #fff;
       --dice-pip: #172026;
       --number-bg:
-        linear-gradient(180deg, rgba(35, 43, 52, 0.98), rgba(23, 30, 38, 0.96)),
-        #202832;
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(235, 241, 247, 0.9)),
+        #fff;
       --button-bg: #202832;
     }
 
@@ -60,7 +68,7 @@
       min-height: 100vh;
       min-height: 100svh;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
+      color: #172026;
       background: var(--body-bg);
     }
 
@@ -135,8 +143,20 @@
       font-size: clamp(1rem, 3.6vw, 1.25rem);
     }
 
+    #hueButton {
+      color: var(--wheel-color);
+    }
+
+    #diceButton {
+      color: var(--dice-color);
+    }
+
+    #shuffleButton {
+      color: var(--shuffle-color);
+    }
+
     .mode-buttons button.is-active {
-      color: var(--ink);
+      color: var(--active-color);
       border: 0;
       background: transparent;
       box-shadow: none;
@@ -245,7 +265,7 @@
       width: 100%;
       padding: 0 12px;
       text-align: center;
-      color: var(--ink);
+      color: #172026;
       font-size: clamp(2.8rem, 9vw, 5.25rem);
       font-weight: 900;
       line-height: 1;
@@ -284,7 +304,7 @@
       display: grid;
       place-items: center;
       border-radius: 999px;
-      color: var(--ink);
+      color: #172026;
       background: #ffffff;
       border: 2px solid rgba(23, 32, 38, 0.22);
       font-weight: 900;
@@ -313,7 +333,7 @@
     }
 
     .hue-controls {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       align-items: end;
     }
 
@@ -405,15 +425,6 @@
       }
     }
 
-    @media (max-width: 560px) {
-      .hue-controls {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      }
-
-      #hueClearButton {
-        grid-column: auto;
-      }
-    }
   </style>
 </head>
 <body>
