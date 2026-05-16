@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PickOne</title>
+  <link rel="preload" href="sounds/dice.mp3" as="audio" type="audio/mpeg">
+  <link rel="preload" href="sounds/shuffle.mp3" as="audio" type="audio/mpeg">
+  <link rel="preload" href="sounds/tick.mp3" as="audio" type="audio/mpeg">
+  <link rel="preload" href="sounds/spin_stop.mp3" as="audio" type="audio/mpeg">
   <style>
     :root {
       color-scheme: light;
@@ -524,10 +528,11 @@
     const status = document.getElementById("status");
     const themeButton = document.getElementById("themeButton");
     const soundButton = document.getElementById("soundButton");
-    const tickSound = new Audio("tick.mp3");
-    const stopSound = new Audio("spin_stop.mp3");
-    const diceSound = new Audio("dice.mp3");
-    const shuffleSound = new Audio("shuffle.mp3");
+    const tickSound = new Audio("sounds/tick.mp3");
+    const stopSound = new Audio("sounds/spin_stop.mp3");
+    const diceSound = new Audio("sounds/dice.mp3");
+    const shuffleSound = new Audio("sounds/shuffle.mp3");
+    const audioSources = [tickSound, stopSound, diceSound, shuffleSound];
 
     const RANGE_LIMIT = 1000;
     const MAX_HUE_ENTRIES = 30;
@@ -544,24 +549,21 @@
     let isBusy = false;
     let darkMode = false;
     let soundEnabled = true;
+    let audioPrimed = false;
     let currentRotation = { x: 0, y: 0, z: 0 };
     const defaultHueEntries = [
-      "Arthi",
-      "Bruno",
-      "David",
-      "Fabian",
-      "Fi",
-      "Jens",
-      "Julio",
-      "Katrin",
-      "Luben",
-      "Malaiz",
-      "Marina",
-      "Samin",
-      "Sima",
-      "Sivak",
-      "Victor",
-      "Zan"
+      "Simon",
+      "Aki",
+      "Amen",
+      "Saron",
+      "Lukas",
+      "Soli",
+      "Samy",
+      "Rahel",
+      "Noah",
+      "Ruth",
+      "Ezra",
+      "Sara"
     ];
     let hueEntries = [...defaultHueEntries];
     let hueRotation = 0;
@@ -579,8 +581,33 @@
     function playSound(source, volume = 0.65) {
       if (!soundEnabled) return;
       const sound = source.cloneNode();
+      sound.preload = "auto";
       sound.volume = volume;
       sound.play().catch(() => {});
+    }
+
+    function preloadSounds() {
+      audioSources.forEach((sound) => {
+        sound.preload = "auto";
+        sound.load();
+      });
+    }
+
+    function primeAudio() {
+      if (audioPrimed) return;
+      audioPrimed = true;
+      audioSources.forEach((sound) => {
+        sound.muted = true;
+        sound.play()
+          .then(() => {
+            sound.pause();
+            sound.currentTime = 0;
+            sound.muted = false;
+          })
+          .catch(() => {
+            sound.muted = false;
+          });
+      });
     }
 
     function startLoopingSound(source, volume = 0.65) {
@@ -592,6 +619,7 @@
         soundIndex = (soundIndex + 1) % sounds.length;
         sound.pause();
         sound.currentTime = 0;
+        sound.preload = "auto";
         sound.volume = volume;
         sound.play().catch(() => {});
       }
@@ -939,6 +967,8 @@
       }
     });
 
+    document.addEventListener("pointerdown", primeAudio, { once: true });
+
     window.addEventListener("keydown", (event) => {
       if (event.code !== "Space" || document.activeElement.tagName === "INPUT") return;
       event.preventDefault();
@@ -947,6 +977,7 @@
       if (activeMode === "hue") spinHue();
     });
 
+    preloadSounds();
     drawHueWheel();
     setMode("hue");
   </script>
