@@ -528,11 +528,13 @@
     const status = document.getElementById("status");
     const themeButton = document.getElementById("themeButton");
     const soundButton = document.getElementById("soundButton");
-    const tickSound = new Audio("sounds/tick.mp3");
-    const stopSound = new Audio("sounds/spin_stop.mp3");
-    const diceSound = new Audio("sounds/dice.mp3");
-    const shuffleSound = new Audio("sounds/shuffle.mp3");
-    const audioSources = [tickSound, stopSound, diceSound, shuffleSound];
+    const audioFiles = {
+      tick: "sounds/tick.mp3",
+      stop: "sounds/spin_stop.mp3",
+      dice: "sounds/dice.mp3",
+      shuffle: "sounds/shuffle.mp3"
+    };
+    const audioBuffers = {};
 
     const RANGE_LIMIT = 1000;
     const MAX_HUE_ENTRIES = 30;
@@ -550,6 +552,7 @@
     let darkMode = false;
     let soundEnabled = true;
     let audioPrimed = false;
+    let audioContext = null;
     let currentRotation = { x: 0, y: 0, z: 0 };
     const defaultHueEntries = [
       "Simon",
@@ -578,59 +581,62 @@
       return min + (randomBuffer[0] % range);
     }
 
-    function playSound(source, volume = 0.65) {
+    function getAudioContext() {
+      if (!audioContext) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioContext = new AudioContextClass();
+      }
+      return audioContext;
+    }
+
+    async function loadSound(name) {
+      if (audioBuffers[name]) return audioBuffers[name];
+      const context = getAudioContext();
+      if (!context) return null;
+      const response = await fetch(audioFiles[name]);
+      const data = await response.arrayBuffer();
+      audioBuffers[name] = await context.decodeAudioData(data);
+      return audioBuffers[name];
+    }
+
+    function playSound(name, volume = 0.65) {
       if (!soundEnabled) return;
-      const sound = source.cloneNode();
-      sound.preload = "auto";
-      sound.volume = volume;
-      sound.play().catch(() => {});
+      const context = getAudioContext();
+      const buffer = audioBuffers[name];
+      if (!context || !buffer) return;
+      const source = context.createBufferSource();
+      const gain = context.createGain();
+      gain.gain.value = volume;
+      source.buffer = buffer;
+      source.connect(gain);
+      gain.connect(context.destination);
+      source.start();
     }
 
     function preloadSounds() {
-      audioSources.forEach((sound) => {
-        sound.preload = "auto";
-        sound.load();
+      Object.keys(audioFiles).forEach((name) => {
+        loadSound(name).catch(() => {});
       });
     }
 
     function primeAudio() {
       if (audioPrimed) return;
       audioPrimed = true;
-      audioSources.forEach((sound) => {
-        sound.muted = true;
-        sound.play()
-          .then(() => {
-            sound.pause();
-            sound.currentTime = 0;
-            sound.muted = false;
-          })
-          .catch(() => {
-            sound.muted = false;
-          });
-      });
+      const context = getAudioContext();
+      if (!context) return;
+      context.resume().catch(() => {});
+      preloadSounds();
     }
 
-    function startLoopingSound(source, volume = 0.65) {
+    function startLoopingSound(name, volume = 0.65) {
       if (!soundEnabled) return () => {};
-      const sounds = [source.cloneNode(), source.cloneNode()];
-      let soundIndex = 0;
       function playNext() {
-        const sound = sounds[soundIndex];
-        soundIndex = (soundIndex + 1) % sounds.length;
-        sound.pause();
-        sound.currentTime = 0;
-        sound.preload = "auto";
-        sound.volume = volume;
-        sound.play().catch(() => {});
+        playSound(name, volume);
       }
       playNext();
       const interval = window.setInterval(playNext, 150);
       return () => {
         window.clearInterval(interval);
-        sounds.forEach((sound) => {
-          sound.pause();
-          sound.currentTime = 0;
-        });
       };
     }
 
@@ -644,7 +650,7 @@
         if (stopped) return;
         const progress = Math.min((now - startTime) / duration, 1);
         if (now >= nextTick && progress < 0.96) {
-          playSound(tickSound, 0.62);
+          playSound("tick", 0.62);
           nextTick = now + 55 + easeOutCubic(progress) * 210;
         }
         if (progress < 1) requestAnimationFrame(scheduleTick);
@@ -714,7 +720,7 @@
       setMode("dice");
       isBusy = true;
       const selectedFace = randomInt(0, 5);
-      playSound(diceSound, 0.58);
+      playSound("dice", 0.58);
       await animateDiceTo(selectedFace);
       status.textContent = `Chosen: ${selectedFace + 1}`;
       isBusy = false;
@@ -769,7 +775,7 @@
       isBusy = true;
       const { min, max } = getRange();
       const selected = randomInt(min, max);
-      const stopShuffleSound = startLoopingSound(shuffleSound, 0.5);
+      const stopShuffleSound = startLoopingSound("shuffle", 0.5);
       await animateNumberShuffle(selected, min, max);
       stopShuffleSound();
       status.textContent = `Chosen: ${selected}`;
@@ -892,7 +898,7 @@
       hueSvg.style.transition = "";
       hueSvg.style.transform = `rotate(${hueRotation}deg)`;
       drawHueWheel(selectedIndex);
-      playSound(stopSound, 0.46);
+      playSound("stop", 0.46);
       status.textContent = `Chosen: ${hueEntries[selectedIndex]}`;
       isBusy = false;
     }
