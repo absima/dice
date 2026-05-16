@@ -86,7 +86,7 @@
       min-height: 100svh;
       margin: 0 auto;
       display: grid;
-      align-items: center;
+      align-items: start;
       padding: clamp(12px, 3svh, 34px) 0;
     }
 
@@ -95,6 +95,7 @@
       gap: clamp(12px, 2.5svh, 20px);
       justify-items: center;
       text-align: center;
+      align-self: start;
     }
 
     h1 {
@@ -182,6 +183,7 @@
     .display-shell {
       position: relative;
       width: min(58vw, var(--display-size));
+      min-width: min(58vw, var(--display-size));
       margin: 18px 0 10px;
       aspect-ratio: 1;
       display: grid;
@@ -321,8 +323,9 @@
 
     .options {
       width: min(100%, 420px);
-      min-height: 88px;
+      min-height: 126px;
       display: grid;
+      align-content: start;
       gap: 10px;
     }
 
@@ -535,6 +538,10 @@
       shuffle: "sounds/shuffle.mp3"
     };
     const audioBuffers = {};
+    const audioData = {};
+    const fallbackAudio = Object.fromEntries(
+      Object.entries(audioFiles).map(([name, path]) => [name, new Audio(path)])
+    );
 
     const RANGE_LIMIT = 1000;
     const MAX_HUE_ENTRIES = 30;
@@ -552,6 +559,7 @@
     let darkMode = false;
     let soundEnabled = true;
     let audioPrimed = false;
+    let audioReadyPromise = null;
     let audioContext = null;
     let currentRotation = { x: 0, y: 0, z: 0 };
     const defaultHueEntries = [
@@ -581,6 +589,10 @@
       return min + (randomBuffer[0] % range);
     }
 
+    function isMobileAudioEnvironment() {
+      return window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
+    }
+
     function getAudioContext() {
       if (!audioContext) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -593,17 +605,33 @@
       if (audioBuffers[name]) return audioBuffers[name];
       const context = getAudioContext();
       if (!context) return null;
-      const response = await fetch(audioFiles[name]);
-      const data = await response.arrayBuffer();
-      audioBuffers[name] = await context.decodeAudioData(data);
+      if (!audioData[name]) {
+        const response = await fetch(audioFiles[name]);
+        audioData[name] = await response.arrayBuffer();
+      }
+      audioBuffers[name] = await context.decodeAudioData(audioData[name].slice(0));
       return audioBuffers[name];
+    }
+
+    async function prepareAudio() {
+      if (!soundEnabled) return;
+      if (!audioReadyPromise) {
+        audioReadyPromise = Promise.all(Object.keys(audioFiles).map((name) => loadSound(name))).catch(() => null);
+      }
+      await audioReadyPromise;
     }
 
     function playSound(name, volume = 0.65) {
       if (!soundEnabled) return;
       const context = getAudioContext();
       const buffer = audioBuffers[name];
-      if (!context || !buffer) return;
+      if (!context || !buffer || context.state !== "running") {
+        const fallback = fallbackAudio[name].cloneNode();
+        fallback.preload = "auto";
+        fallback.volume = volume;
+        fallback.play().catch(() => {});
+        return;
+      }
       const source = context.createBufferSource();
       const gain = context.createGain();
       gain.gain.value = volume;
@@ -616,16 +644,29 @@
     function preloadSounds() {
       Object.keys(audioFiles).forEach((name) => {
         loadSound(name).catch(() => {});
+        fallbackAudio[name].preload = "auto";
+        fallbackAudio[name].load();
       });
     }
 
-    function primeAudio() {
+    async function primeAudio() {
       if (audioPrimed) return;
       audioPrimed = true;
       const context = getAudioContext();
-      if (!context) return;
-      context.resume().catch(() => {});
-      preloadSounds();
+      if (context) await context.resume().catch(() => {});
+      Object.values(fallbackAudio).forEach((sound) => {
+        sound.muted = true;
+        sound.play()
+          .then(() => {
+            sound.pause();
+            sound.currentTime = 0;
+            sound.muted = false;
+          })
+          .catch(() => {
+            sound.muted = false;
+          });
+      });
+      await prepareAudio();
     }
 
     function startLoopingSound(name, volume = 0.65) {
@@ -645,11 +686,12 @@
       let stopped = false;
       const startTime = performance.now();
       let nextTick = startTime;
+      const tickCutoff = isMobileAudioEnvironment() ? 0.78 : 0.96;
 
       function scheduleTick(now) {
         if (stopped) return;
         const progress = Math.min((now - startTime) / duration, 1);
-        if (now >= nextTick && progress < 0.96) {
+        if (now >= nextTick && progress < tickCutoff) {
           playSound("tick", 0.62);
           nextTick = now + 55 + easeOutCubic(progress) * 210;
         }
@@ -719,6 +761,7 @@
       if (isBusy) return;
       setMode("dice");
       isBusy = true;
+      await primeAudio();
       const selectedFace = randomInt(0, 5);
       playSound("dice", 0.58);
       await animateDiceTo(selectedFace);
@@ -773,6 +816,7 @@
       if (isBusy) return;
       setMode("shuffle");
       isBusy = true;
+      await primeAudio();
       const { min, max } = getRange();
       const selected = randomInt(min, max);
       const stopShuffleSound = startLoopingSound("shuffle", 0.5);
@@ -882,6 +926,7 @@
       if (isBusy || hueEntries.length === 0) return;
       setMode("hue");
       isBusy = true;
+      await primeAudio();
       drawHueWheel();
       const selectedIndex = randomInt(0, hueEntries.length - 1);
       const sector = 360 / hueEntries.length;
@@ -944,7 +989,10 @@
     hueButton.addEventListener("click", () => setMode("hue"));
     diceRollButton.addEventListener("click", rollDice);
     shuffleRollButton.addEventListener("click", shuffleRange);
-    hueRollButton.addEventListener("click", spinHue);
+    hueRollButton.addEventListener("click", (event) => {
+      if (!event.target.closest(".hue-center")) return;
+      spinHue();
+    });
     soundButton.addEventListener("click", () => {
       soundEnabled = !soundEnabled;
       soundButton.textContent = soundEnabled ? "Sound on" : "Sound off";
